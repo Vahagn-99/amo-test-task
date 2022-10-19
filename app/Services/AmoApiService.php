@@ -3,9 +3,9 @@
 namespace App\Services;
 
 use AmoCRM\Client\AmoCRMApiClient;
-use AmoCRM\Collections\BaseApiCollection;
-use AmoCRM\Exceptions\AmoCRMApiException;
-use AmoCRM\Models\AccountModel;
+use AmoCRM\Exceptions\AmoCRMoAuthApiException;
+use AmoCRM\Exceptions\BadTypeException;
+use Exception;
 use Illuminate\Support\Facades\Log;
 use JsonException;
 use League\OAuth2\Client\Token\AccessToken;
@@ -23,20 +23,29 @@ abstract class AmoApiService
      */
     protected mixed $code;
 
+    /**
+     * @var string
+     */
+    protected string $domain = 'vahagntxa.amocrm.ru';
+
     public function __construct()
     {
-        $this->apiClient = new AmoCRMApiClient(...$this->apiSettings());
+        $clientId = config('services.amo.client_id');
+        $clientSecret = config('services.amo.client_secret');
+        $redirectUri = config('services.amo.redirect_uri');
+
+        $this->apiClient = new AmoCRMApiClient($clientId, $clientSecret, $redirectUri);
     }
 
-    private function apiSettings(): array
-    {
-        return (array)config('service.amo');
-    }
-
+    /**
+     * @throws BadTypeException
+     * @throws Exception
+     */
     public function showButton(): void
     {
         $state = bin2hex(random_bytes(16));
         $_SESSION['oauth2state'] = $state;
+
         echo $this->apiClient->getOAuthClient()->getOAuthButton(
             [
                 'title' => 'Установить интеграцию',
@@ -56,20 +65,21 @@ abstract class AmoApiService
     }
 
     /**
-     * The First thing which could do when need to connect to amocrm api service
+     * The First thing which could do when need to connect to api service
+     * @throws JsonException|AmoCRMoAuthApiException
      */
     public function authClient(): AmoCRMApiClient
     {
-        $auth = $this->code;
+        $auth = isset($this->code) ?: null;
+
+        $oauth = $this->apiClient->getOAuthClient();
+
+        $oauth->setBaseDomain($this->domain);
+
+        $accessToken = $this->getToken() ?: $oauth->getAccessTokenByCode($auth);
         try {
-            $oauth = $this->apiClient->getOAuthClient();
-
-            $oauth->setBaseDomain("provansme.amocrm.ru");
-
-            $accessToken = $this->getToken() ?? $oauth->getAccessTokenByCode($auth);
-
             $this->apiClient->setAccessToken($accessToken)
-                ->setAccountBaseDomain('provansme.amocrm.ru')
+                ->setAccountBaseDomain($this->domain)
                 ->onAccessTokenRefresh(
                     function (AccessTokenInterface $accessToken, string $baseDomain) {
                         $this->saveToken([
@@ -88,7 +98,7 @@ abstract class AmoApiService
                     'baseDomain' => $this->apiClient->getAccountBaseDomain(),
                 ]);
             }
-        } catch (\AmoCRM\Exceptions\AmoCRMoAuthApiException|JsonException $e) {
+        } catch (JsonException $e) {
             Log::debug($e->getMessage());
         } finally {
             return $this->apiClient;
@@ -96,24 +106,6 @@ abstract class AmoApiService
     }
 
     /**
-     * Get account properties with all available properties
-     */
-    public function getAmoAccount(): BaseApiCollection|AccountModel|null
-    {
-        /** @var  BaseApiCollection|AccountModel|null $account */
-        $account = null;
-
-        $this->authClient();
-        try {
-            $account = $this->apiClient->account()->getCurrent(AccountModel::getAvailableWith());
-        } catch (AmoCRMApiException $e) {
-            Log::debug($e->getMessage());
-        } finally {
-            return $account;
-        }
-    }
-
-    /**settings
      * save token in local storage
      * @param array $accessToken
      * @return void

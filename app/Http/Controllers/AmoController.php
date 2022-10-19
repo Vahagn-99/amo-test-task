@@ -2,17 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use AmoCRM\Exceptions\BadTypeException;
 use App\Services\LeadService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class AmoController extends Controller
 {
-    public function __construct(private LeadService $amoService)
+
+    public function __construct(private readonly LeadService $amoService)
     {
 
     }
 
+    /**
+     * @throws BadTypeException
+     */
     public function amoButton(): void
     {
         $this->amoService->showButton();
@@ -20,7 +25,8 @@ class AmoController extends Controller
 
     public function getToken(): RedirectResponse
     {
-        $this->amoService->setCode(\request('code', null));
+
+        $this->amoService->setCode(\request('code'));
 
         return redirect()->route('welcome');
     }

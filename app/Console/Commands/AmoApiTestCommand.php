@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\AmoApiService;
+use App\Services\LeadService;
 use Illuminate\Console\Command;
 
 class AmoApiTestCommand extends Command
@@ -23,11 +24,12 @@ class AmoApiTestCommand extends Command
 
     /**
      * Execute the console command.
-     *
-     * @return int
      */
-    public function handle(AmoApiService $amo)
+    public function handle(LeadService $amo): void
     {
-        return Command::SUCCESS;
+        $amo->authClient();
+        $leads = $amo->getAllLeads();
+
+        dd($leads);
     }
 }

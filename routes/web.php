@@ -16,3 +16,6 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/get-token', [\App\Http\Controllers\AmoController::class, 'getToken'])->name('amo.get-token');
+Route::get('/show-amo-button', [\App\Http\Controllers\AmoController::class, 'amoButton'])->name('amo.button');

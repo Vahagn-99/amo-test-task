@@ -12,17 +12,13 @@ return new class extends Migration {
      */
     public function up()
     {
-        Schema::create('leads', function (Blueprint $table) {
+        Schema::create('companies', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('company_id')->unique();
             $table->string('name');
-            $table->float('price');
-            $table->boolean('is_deleted');
-            $table->foreignIdFor(\App\Models\Company::class,
-                'company_id')->nullable()->constrained()->on('companies')->cascadeOnDelete();
-            $table->unsignedBigInteger('lead_id')->unique();
             $table->timestamps();
             // add indexes
-            $table->index(['lead_id']);
+            $table->index(['company_id']);
         });
     }
 
@@ -33,6 +29,6 @@ return new class extends Migration {
      */
     public function down()
     {
-        Schema::dropIfExists('leads');
+        Schema::dropIfExists('companies');
     }
 };
