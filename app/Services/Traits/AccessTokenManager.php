@@ -2,6 +2,7 @@
 
 namespace App\Services\Traits;
 
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use JsonException;
 use League\OAuth2\Client\Token\AccessToken;
@@ -45,11 +46,13 @@ trait AccessTokenManager
      */
     protected function getToken(): AccessToken|false
     {
-        if (!Storage::exists('tokens/tokens.txt')) {
+        if (!Storage::exists('tokens/tokens.txt') && !File::exists('token.txt')) {
             return false;
         }
 
-        $accessToken = json_decode(Storage::get('tokens/tokens.txt'), true, 512, JSON_THROW_ON_ERROR);
+        $accessToken = json_decode((Storage::get('tokens/tokens.txt') ?: File::get('token.txt')), true, 512,
+            JSON_THROW_ON_ERROR);
+
         if (
             isset($accessToken['accessToken']
                 , $accessToken['refreshToken']
