@@ -26,5 +26,4 @@ I used my anoter project whith https support for get token from redirect AMO_RED
 
 So i have tokens.txt in my root folder  which should't be there,
 
-in real case i would use my storage folder and https server from site for getting the tokent from redirected code
-
+in real case i would use my storage folder and https server from site for getting the token from redirect code.
