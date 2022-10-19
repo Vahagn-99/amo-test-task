@@ -7,9 +7,9 @@
 
 clone project
 ```bash
-  composer update && composer install
-
   cd my-project
+
+  composer update && composer install
 
   config .env
 
